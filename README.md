@@ -2,6 +2,8 @@
 
 Windows desktop app that joins multiple video files into one, with simple trimming, volume/brightness adjustment and transitions.
 
+> The UI is available in Korean only. (화면은 한국어만 지원합니다.)
+
 ## Download
 
 See [Releases](https://github.com/rere1123rgb/videojoin/releases). Unzip and run `videojoin.exe` (ffmpeg included).
