@@ -95,10 +95,12 @@ class ClipList extends StatelessWidget {
                         ),
                       ),
                       const TextSpan(text: ' 를 누르세요. 꾹 누르면 맨 끝으로 갑니다.  ·  '),
-                      TextSpan(
-                        text: '⣿',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
+                      // ⣿ 글자는 맑은 고딕에 없어 네모로 나올 수 있어 손잡이 아이콘을 그대로 쓴다.
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: Icon(
+                          Icons.drag_indicator,
+                          size: d.px(19),
                           color: AppColors.text,
                         ),
                       ),

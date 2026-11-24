@@ -16,7 +16,15 @@ import '../theme.dart';
 /// 창 제목과 버전 표시에 함께 붙는다.
 const String kReleaseTag = '';
 
+/// 빌드 날짜 대신 쓸 버전(시각 테스트용).
+const String kVersionOverride = String.fromEnvironment('VJ_VERSION');
+
 String appVersionLabel() {
+  if (kVersionOverride.isNotEmpty) {
+    return kReleaseTag.isEmpty
+        ? kVersionOverride
+        : '$kVersionOverride $kReleaseTag';
+  }
   try {
     final exe = Platform.resolvedExecutable;
     final dir = File(exe).parent.path;
