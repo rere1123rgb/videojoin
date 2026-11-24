@@ -1,0 +1,12 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    # 검증용 CLI. 콘솔 출력이 목적이라 avoid_print 가 의미 없다.
+    - bin/**
+    - build/**
+    - windows/**
+
+linter:
+  rules:
+    use_build_context_synchronously: false
