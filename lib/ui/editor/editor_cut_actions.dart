@@ -85,7 +85,7 @@ extension ClipEditorCutActions on ClipEditorController {
     final s = sel;
     if (s != null) {
       showHint('${formatClock(s.lo, precise: true)} ~ ${formatClock(s.hi, precise: true)} 을 '
-          '골랐습니다. 빼려면 [고른 구간 빼기].');
+          '골랐습니다. [고른 구간 빼기] 또는 [고른 구간만 쓰기].');
     }
   }
 
@@ -112,6 +112,34 @@ extension ClipEditorCutActions on ClipEditorController {
         '잘못 뺐으면 [되돌리기].',
       );
     }
+  }
+
+  /// 고른 구간만 남기고 앞뒤를 뺀다. 고른 구간 안에서 이미 뺀 곳은 그대로 둔다.
+  void keepOnlySelection() {
+    final s = sel;
+    if (s == null) {
+      showHint('먼저 아래 장면 띠를 마우스로 끌어서 구간을 고르세요.');
+      return;
+    }
+    stop();
+    final next = pieces.copy()
+      ..setRange(0, s.lo, false)
+      ..setRange(s.hi, dur, false)
+      ..mergeSame();
+    if (!next.pieces.any((p) => p.keep)) {
+      showHint('고른 구간은 이미 다 뺀 곳이라 남는 것이 없습니다.');
+      return;
+    }
+    remember();
+    pieces = next;
+    selA = selB = null;
+    pos = s.lo;
+    refresh();
+    requestFrame(immediate: true);
+    showHint(
+      '${formatClock(s.lo)} ~ ${formatClock(s.hi)} 만 남겼습니다. '
+      '잘못했으면 [되돌리기].',
+    );
   }
 
   void startHere() {

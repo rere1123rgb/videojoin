@@ -139,6 +139,13 @@ class EditorCutRow extends StatelessWidget {
                       enabled: sel != null,
                       onTap: () => c.applySelection(false),
                     ),
+                  ActionButton(
+                    icon: Icons.crop,
+                    label: '고른 구간만 쓰기',
+                    color: AppColors.primary,
+                    enabled: sel != null && !onlyRemoved,
+                    onTap: c.keepOnlySelection,
+                  ),
                   Tooltip(
                     message: '방금 한 것을 취소 (Ctrl+Z)',
                     child: ActionButton(
@@ -181,8 +188,8 @@ class _SelectionLine extends StatelessWidget {
       text = '구간 시작: ${formatClock(a, precise: true)}  →  끝낼 곳으로 옮긴 뒤 '
           '[여기를 구간 끝으로]';
     } else {
-      text = '가운데를 빼려면: 장면 띠를 끌어서, 또는 [여기를 구간 시작으로]·'
-          '[여기를 구간 끝으로]로 고른 뒤 [고른 구간 빼기]';
+      text = '구간 고르기: 장면 띠를 끌거나 [여기를 구간 시작으로]·[여기를 구간 끝으로] '
+          '→ [고른 구간 빼기] 또는 [고른 구간만 쓰기]';
     }
     final active = sel != null || marking;
     return Wrap(

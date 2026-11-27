@@ -111,6 +111,42 @@ void main() {
     ]);
   });
 
+  test('고른 구간만 쓰기: 앞뒤를 빼고, 안에서 뺀 곳은 그대로', () {
+    c.seek(40);
+    c.markIn();
+    c.seek(45);
+    c.markOut();
+    c.applySelection(false);
+    c.seek(30);
+    c.markIn();
+    c.seek(60);
+    c.markOut();
+    c.keepOnlySelection();
+    expect(c.currentEdit.keep, const [TimeRange(30, 40), TimeRange(45, 60)]);
+    expect(c.sel, isNull);
+    expect(c.pos, closeTo(30, 0.01));
+    expect(c.hint, contains('만 남겼습니다'));
+    c.undo();
+    expect(c.currentEdit.keep, const [TimeRange(0, 40), TimeRange(45, 100)]);
+  });
+
+  test('고른 구간만 쓰기: 고른 것이 없거나 다 뺀 곳이면 안내만', () {
+    c.keepOnlySelection();
+    expect(c.canUndo, isFalse);
+    c.seek(20);
+    c.markIn();
+    c.seek(30);
+    c.markOut();
+    c.applySelection(false);
+    c.seek(20);
+    c.markIn();
+    c.seek(30);
+    c.markOut();
+    c.keepOnlySelection();
+    expect(c.hint, contains('남는 것이 없습니다'));
+    expect(c.currentEdit.keep, const [TimeRange(0, 20), TimeRange(30, 100)]);
+  });
+
   test('전부 빼는 구간은 거절한다', () {
     c.seek(0);
     c.markIn();
