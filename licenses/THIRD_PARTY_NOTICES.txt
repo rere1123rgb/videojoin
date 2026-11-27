@@ -1,0 +1,30 @@
+Third-party software included in this distribution
+==================================================
+
+videojoin itself is licensed under the MIT License (see LICENSE.txt).
+It runs the programs below as separate processes; they keep their own licenses.
+
+FFmpeg (ffmpeg.exe, ffprobe.exe)
+--------------------------------
+Version : N-125773-g7002e01c19-20260726
+          (FFmpeg git commit 7002e01c19, Windows build from BtbN/FFmpeg-Builds,
+           configured with --enable-gpl --enable-version3)
+License : GNU General Public License, version 3 or later
+          Full text: licenses/ffmpeg-GPL-3.0.txt
+Source  : FFmpeg       https://git.ffmpeg.org/ffmpeg.git  (commit 7002e01c19)
+                       https://github.com/FFmpeg/FFmpeg/commit/7002e01c19
+          Build scripts and the exact versions of the bundled libraries
+                       https://github.com/BtbN/FFmpeg-Builds
+          The binaries are unmodified. On request, the maintainer of this
+          repository will provide the corresponding source code:
+          https://github.com/rere1123rgb/videojoin/issues
+FFmpeg is a trademark of Fabrice Bellard, originator of the FFmpeg project.
+
+Microsoft Visual C++ Runtime (msvcp140.dll, vcruntime140.dll, vcruntime140_1.dll)
+-------------------------------------------------------------------------------
+Redistributed under the Microsoft Visual Studio redistributable terms.
+
+Flutter engine and Dart packages
+--------------------------------
+Their license notices are bundled by Flutter in data/flutter_assets/NOTICES.Z
+(BSD-3-Clause, Apache-2.0, MIT and others).

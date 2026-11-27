@@ -164,6 +164,11 @@ robocopy $out $appDir /E /NFL /NDL /NJH /NJS /nc /ns /np | Out-Null
 if ($LASTEXITCODE -ge 8) { throw "robocopy failed ($LASTEXITCODE)" }
 $LASTEXITCODE = 0
 
+# Licenses: the app (MIT) and the bundled ffmpeg (GPLv3) with its source location.
+Copy-Item (Join-Path $src "LICENSE") (Join-Path $appDir "LICENSE.txt") -Force
+Copy-Item (Join-Path $src "licenses") (Join-Path $appDir "licenses") -Recurse -Force
+Write-Output "      added  LICENSE.txt + licenses\"
+
 # Shortcut maker .bat inside the app folder; it launches install_shortcut.ps1.
 # Its Korean filename is built from code points to keep this file ASCII.
 $helper = Join-Path $src "install_shortcut.ps1"

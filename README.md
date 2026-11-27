@@ -20,6 +20,10 @@
 
 인터넷에 아무것도 보내지 않습니다(업데이트 확인·통계·오류 전송 없음). 맥은 지원하지 않습니다.
 
+## 라이선스
+
+프로그램은 [MIT 라이선스](LICENSE)입니다. 함께 들어 있는 ffmpeg는 GPL v3이며, 버전과 소스 위치는 [licenses/THIRD_PARTY_NOTICES.txt](licenses/THIRD_PARTY_NOTICES.txt)에 있습니다.
+
 ---
 
 ## English
@@ -43,3 +47,7 @@ powershell -ExecutionPolicy Bypass -File build_release.ps1 -Web
 ```
 
 Output: `dist/web/videojoin/`
+
+### License
+
+MIT (see [LICENSE](LICENSE)). The bundled ffmpeg binaries are GPL v3; version and source links are in [licenses/THIRD_PARTY_NOTICES.txt](licenses/THIRD_PARTY_NOTICES.txt).
