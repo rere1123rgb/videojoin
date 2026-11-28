@@ -199,14 +199,14 @@ List<String> transitionArgs(
 
   String audioChain(ClipItem c, String input, String fade, String label) {
     final af = Executor.buildAudioFilter(c);
-    return '[$input]aresample=48000,aformat=channel_layouts=stereo,'
+    return '[$input]${Executor.kAudioAlign},aresample=48000,aformat=channel_layouts=stereo,'
         '${af.isEmpty ? '' : '$af,'}apad,atrim=0:$ds,'
         'afade=t=$fade:st=0:d=$ds[$label]';
   }
 
   final filter = [
-    '[0:v:0]${Executor.buildFilterChain(a, s)}[va]',
-    '[1:v:0]${Executor.buildFilterChain(b, s)}[vb]',
+    '[0:v:0]${Executor.buildFilterChain(a, s)},${Executor.kVideoTailPad},trim=duration=$ds[va]',
+    '[1:v:0]${Executor.buildFilterChain(b, s)},${Executor.kVideoTailPad},trim=duration=$ds[vb]',
     '[va][vb]xfade=transition=${j.style.xfade}:duration=$ds:offset=0[v]',
     audioChain(a, inA, 'out', 'aa'),
     audioChain(b, inB, 'in', 'ab'),

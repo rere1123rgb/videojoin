@@ -130,8 +130,15 @@ class Prober {
     final rotation = _extractRotation(video);
     final sar = _extractSar(video);
 
-    var duration = _toDouble(format['duration']) ?? 0;
-    if (duration <= 0) duration = _toDouble(video['duration']) ?? 0;
+    // 화면 길이를 기준으로 한다. 파일 전체 길이는 소리가 화면보다 길면 소리
+    // 끝까지 세서, 이음매에서 화면이 그만큼 멈춘다. 화면 길이가 엉뚱하면
+    // (절반 미만, 전체보다 김) 전체 길이를 쓴다.
+    final fmtDur = _toDouble(format['duration']) ?? 0;
+    final vidDur = _toDouble(video['duration']) ?? 0;
+    var duration = fmtDur;
+    if (vidDur > 0 && (fmtDur <= 0 || (vidDur >= fmtDur * 0.5 && vidDur <= fmtDur + 0.1))) {
+      duration = vidDur;
+    }
     if (duration <= 0) {
       // 일부 avi/mkv 는 duration 이 비어 있어 프레임 수로 역산한다.
       final nb = _toInt(video['nb_frames']);

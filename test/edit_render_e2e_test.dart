@@ -276,4 +276,52 @@ void main() {
     final strip = await g.filmstrip(spec, 6, width: 120);
     expect(strip.where((s) => s != null).length, 6);
   }, timeout: const Timeout(Duration(minutes: 2)));
+  test('이어붙이는 중 취소하면 반쪽 파일이 남지 않고, 같은 이름의 원래 파일도 그대로', () async {
+    final specs = await Prober(_tools).probeAll([
+      p.join(_root, 'testdata', 'same_a.mp4'),
+      p.join(_root, 'testdata', 'same_b.mp4'),
+    ]);
+    final clips = [
+      ClipItem(id: 'a', spec: specs[0]),
+      ClipItem(id: 'b', spec: specs[1]),
+    ];
+    final s = OutputSettings(
+      lossless: false,
+      width: 640,
+      height: 360,
+      frameRate: const Rational(30, 1),
+      videoBitrate: 1000000,
+      useGpu: false,
+      outputDir: work.path,
+      outputName: 'cancel_join',
+    );
+    // 덮어쓰기에 동의한 기존 파일이 있다고 친다.
+    final existing = File(s.outputPath)..writeAsStringSync('old');
+    final ex = Executor(
+      tools: _tools,
+      encoders: const EncoderSupport(),
+      log: JobLog(File(p.join(work.path, 'cancel_join.log'))),
+    );
+    final ev = <JobProgress>[];
+    await for (final e in ex.run(clips, s)) {
+      ev.add(e);
+      if (e.stage == JobStage.joining && !ex.isCancelled) await ex.cancel();
+    }
+    expect(ev.last.stage, JobStage.cancelled);
+    expect(existing.readAsStringSync(), 'old', reason: '취소했으면 원래 파일은 건드리지 않는다');
+
+    // 다시 하면 끝까지 가서 진짜 결과로 바뀐다.
+    existing.deleteSync();
+    final ex2 = Executor(
+      tools: _tools,
+      encoders: const EncoderSupport(),
+      log: JobLog(File(p.join(work.path, 'cancel_join2.log'))),
+    );
+    final ev2 = await ex2.run(clips, s).toList();
+    expect(ev2.last.stage, JobStage.done,
+        reason: '${ev2.last.message} ${ev2.last.errorMessage ?? ''}');
+    expect(File(s.outputPath).lengthSync(), greaterThan(1024));
+    final left = Directory(p.join(work.path, '.videojoin_temp'));
+    expect(left.existsSync(), isFalse, reason: '임시 파일은 치운다');
+  }, timeout: const Timeout(Duration(minutes: 3)));
 }

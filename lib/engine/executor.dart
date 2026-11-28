@@ -349,7 +349,11 @@ class Executor {
         message: '영상을 하나로 이어붙이고 있습니다',
       ));
 
-      final joinArgs = _joinArgs(settings, outPath);
+      // 작업 폴더 안의 임시 파일에 쓰고, 다 된 뒤에만 저장 이름으로 옮긴다.
+      // 취소·실패 때 반쪽 파일이 완성본 이름으로 남지 않게 한다.
+      final ext = p.extension(outPath).isEmpty ? '.mp4' : p.extension(outPath);
+      final tempOut = p.join(jobDir.path, 'joined$ext');
+      final joinArgs = _joinArgs(settings, tempOut);
       final joinResult = await _runFFmpeg(
         joinArgs,
         workingDirectory: jobDir.path,
@@ -382,10 +386,13 @@ class Executor {
         message: '마무리하고 있습니다',
       ));
 
-      final outFile = File(outPath);
-      if (!outFile.existsSync() || outFile.lengthSync() < 1024) {
+      final tempFile = File(tempOut);
+      if (!tempFile.existsSync() || tempFile.lengthSync() < 1024) {
         throw JobFailure('결과 파일이 만들어지지 않았습니다.');
       }
+      if (_cancelled) throw JobCancelledException();
+      _moveIntoPlace(tempFile, outPath);
+      final outFile = File(outPath);
 
       log.line('완료: $outPath (${formatBytes(outFile.lengthSync())})');
 
@@ -452,6 +459,13 @@ class Executor {
   ///
   /// 자른 구간은 `-ss` 를 `-i` 앞에(accurate seek 로 정확한 시각에서 시작), 길이는
   /// 출력 쪽 `-t` 로 준다. 출력 쪽에 거는 이유는 무음 트랙(anullsrc)까지 같이 끊기 위해서다.
+  /// 화면이 정한 길이보다 짧을 때 마지막 장면을 늘려 채운다(출력 -t 가 끊는다).
+  static const kVideoTailPad = 'tpad=stop_mode=clone:stop_duration=1';
+
+  /// 소리 시작을 0 에 맞춘다. 소리가 화면보다 늦게 시작하면 앞을 무음으로
+  /// 채우고, 중간에 빈 곳도 메운다.
+  static const kAudioAlign = 'aresample=async=1:first_pts=0';
+
   List<String> normalizeArgs(
     SegmentUnit unit,
     OutputSettings s,
@@ -489,16 +503,18 @@ class Executor {
     args.addAll(['-map', '0:v:0']);
     args.addAll(clip.spec.hasAudio ? ['-map', '0:a:0'] : ['-map', '1:a:0']);
     if (!clip.spec.hasAudio) args.add('-shortest');
-    if (unit.trimmed) args.addAll(['-t', unit.duration.toStringAsFixed(3)]);
+    // 조각마다 화면과 소리를 같은 길이로 끊는다. 길이가 다르면 이어붙일 때
+    // 이음매에 구멍이 난다(화면이 멈추거나 소리가 빈다).
+    args.addAll(['-t', unit.duration.toStringAsFixed(3)]);
 
-    args.addAll(['-vf', filter]);
+    args.addAll(['-vf', '$filter,$kVideoTailPad']);
     if (clip.spec.hasAudio) {
       final af = buildAudioFilter(clip,
           fadeIn: unit.fadeIn,
           fadeOut: unit.fadeOut,
           duration: unit.duration,
           fadeSec: unit.fadeSec);
-      if (af.isNotEmpty) args.addAll(['-af', af]);
+      args.addAll(['-af', [kAudioAlign, if (af.isNotEmpty) af, 'apad'].join(',')]);
     }
     args.addAll(videoEncodeArgs(encoder, s));
 
@@ -853,6 +869,30 @@ class Executor {
       hash = (hash * 0x01000193) & 0xFFFFFFFF;
     }
     return hash.toRadixString(16).padLeft(8, '0');
+  }
+
+  /// 다 만든 임시 파일을 저장 이름으로 옮긴다(같은 이름 파일은 바꿔치운다).
+  /// 옮기기가 안 되면 복사한 뒤 임시 파일을 지운다.
+  void _moveIntoPlace(File temp, String outPath) {
+    try {
+      temp.renameSync(outPath);
+      return;
+    } on FileSystemException catch (e) {
+      log.line('옮기기 실패, 복사로 대신함: ${e.message}');
+    }
+    try {
+      temp.copySync(outPath);
+    } on FileSystemException catch (e) {
+      throw JobFailure(
+        '완성한 영상을 저장할 이름으로 옮기지 못했습니다.',
+        detail: '같은 이름의 파일이 다른 프로그램에서 열려 있으면 닫고 다시 해 주세요. (${e.message})',
+      );
+    }
+    try {
+      temp.deleteSync();
+    } on Object {
+      // 작업 폴더째 지워진다.
+    }
   }
 
   void _cleanup(Directory? dir) {

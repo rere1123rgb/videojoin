@@ -327,10 +327,11 @@ void main() {
       return ex.normalizeArgs(u, st, 'out.ts', encoder: 'libx264');
     }
 
-    test('자르지 않았으면 -ss/-t 없음', () {
+    test('자르지 않았으면 -ss 없음, -t 는 화면 길이(화면·소리를 같은 길이로)', () {
       final a = args(clip('a'));
       expect(a.contains('-ss'), isFalse);
-      expect(a.contains('-t'), isFalse);
+      expect(a[a.indexOf('-t') + 1], '10.000');
+      expect(a[a.indexOf('-vf') + 1], endsWith(Executor.kVideoTailPad));
     });
 
     test('자르면 -ss 가 -i 앞에, -t 는 구간 길이', () {
@@ -346,14 +347,15 @@ void main() {
       expect(a[t + 1], '3.750');
     });
 
-    test('소리 편집 없고 소리 있는 영상은 -af 없음', () {
-      expect(args(clip('a')).contains('-af'), isFalse);
+    test('소리 편집 없어도 소리 시작을 맞추고 끝을 채운다', () {
+      final a = args(clip('a'));
+      expect(a[a.indexOf('-af') + 1], '${Executor.kAudioAlign},apad');
     });
 
     test('소리 크기를 바꾸면 -af 에 volume', () {
       final a = args(clip('a', edit: const ClipEdit(volume: VolumeLevel.low)));
       final af = a[a.indexOf('-af') + 1];
-      expect(af, 'volume=0.50');
+      expect(af, '${Executor.kAudioAlign},volume=0.50,apad');
     });
 
     test('소리 없는 영상은 볼륨을 바꿔도 -af 없음 (anullsrc 사용)', () {
@@ -374,7 +376,8 @@ void main() {
       final st = settings(smooth: true);
       final units = Executor.buildUnits([clip('a'), clip('b')], st);
       final a = ex.normalizeArgs(units[1], st, 'o.ts', encoder: 'libx264');
-      expect(a[a.indexOf('-af') + 1], 'afade=t=in:st=0:d=0.5');
+      expect(a[a.indexOf('-af') + 1],
+          '${Executor.kAudioAlign},afade=t=in:st=0:d=0.5,apad');
       expect(a[a.indexOf('-vf') + 1], contains('fade=t=in:st=0:d=0.5'));
     });
   });
