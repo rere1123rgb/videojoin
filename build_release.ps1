@@ -25,6 +25,10 @@ if ($Web) { $dist = Join-Path $src "dist\web" }
 $appName = "videojoin"
 $personal = Join-Path $src "personal.json"
 if ($Web -and $DartOnly) { throw "-Web needs a full build (do not combine with -DartOnly)" }
+# The compiler embeds the absolute project path in app.so
+# (file:///.../.dart_tool/flutter_build/dart_plugin_registrant.dart),
+# so build the public edition from a folder outside the user profile.
+if ($Web -and ($src -match '\\Users\\')) { throw "-Web: build from a folder outside C:\Users (the project path is compiled into app.so), e.g. C:\vjpub" }
 
 # A running instance locks its DLLs, so close it before replacing dist\.
 Get-Process $appName -ErrorAction SilentlyContinue | Stop-Process -Force
